@@ -1,6 +1,7 @@
 import os
 import requests
 from datetime import datetime
+import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -8,6 +9,13 @@ from oauth2client.service_account import ServiceAccountCredentials
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name('service_account.json', scope)
 client = gspread.authorize(creds)
+# Define Nepal timezone
+nepal_tz = pytz.timezone('Asia/Kathmandu')
+
+# Convert UTC timestamps to Nepal local time
+
+
+
 
 sheet = client.open("WeatherLog").sheet1  # Make sure your sheet name matches
 
@@ -20,7 +28,7 @@ response = requests.get(url)
 data = response.json()
 
 # --- Extract data ---
-timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+timestamp = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(nepal_tz).strftime('%Y-%m-%d %H:%M:%S')
 temp = data['main']['temp']
 feels_like = data['main']['feels_like']
 temp_min = data['main']['temp_min']
@@ -32,8 +40,8 @@ wind_deg = data['wind'].get('deg', None)
 visibility = data.get('visibility', None)
 clouds = data['clouds']['all']
 desc = data['weather'][0]['description']
-sunrise = datetime.fromtimestamp(data['sys']['sunrise']).strftime('%H:%M:%S')
-sunset = datetime.fromtimestamp(data['sys']['sunset']).strftime('%H:%M:%S')
+sunrise = datetime.fromtimestamp(data['sys']['sunrise'], tz=pytz.utc).astimezone(nepal_tz).strftime('%H:%M:%S')
+sunset = datetime.fromtimestamp(data['sys']['sunset'], tz=pytz.utc).astimezone(nepal_tz).strftime('%H:%M:%S')
 
 # --- Prepare headers and data row ---
 headers = [
