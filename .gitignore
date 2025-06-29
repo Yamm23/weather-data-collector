@@ -1,0 +1,7 @@
+# Ignore secret files
+service_account.json
+
+# Optional: Ignore other clutter
+__pycache__/
+*.pyc
+.env
