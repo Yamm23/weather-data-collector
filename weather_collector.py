@@ -40,6 +40,10 @@ wind_deg = data['wind'].get('deg', None)
 visibility = data.get('visibility', None)
 clouds = data['clouds']['all']
 desc = data['weather'][0]['description']
+weather_main = data['weather'][0]['main']
+weather_id = data['weather'][0]['id']
+rain_1h = data.get('rain',{}).get('1h',0.0)
+snow_1h = data.get('snow',{}).get('1h',0.0)
 sunrise = datetime.fromtimestamp(data['sys']['sunrise'], tz=pytz.utc).astimezone(nepal_tz).strftime('%H:%M:%S')
 sunset = datetime.fromtimestamp(data['sys']['sunset'], tz=pytz.utc).astimezone(nepal_tz).strftime('%H:%M:%S')
 
@@ -47,12 +51,14 @@ sunset = datetime.fromtimestamp(data['sys']['sunset'], tz=pytz.utc).astimezone(n
 headers = [
     "Timestamp", "Temp (°C)", "Feels Like (°C)", "Temp Min (°C)", "Temp Max (°C)",
     "Humidity (%)", "Pressure (hPa)", "Wind Speed (m/s)", "Wind Direction (deg)",
-    "Visibility (m)", "Cloudiness (%)", "Description", "Sunrise (HH:MM:SS)", "Sunset (HH:MM:SS)"
+    "Visibility (m)", "Cloudiness (%)", "Description","Weather Main", "Weather ID",
+    "Rain (mm)", "Snow (mm)",  "Sunrise (HH:MM:SS)", "Sunset (HH:MM:SS)"
 ]
 
 data_row = [
     timestamp, temp, feels_like, temp_min, temp_max, humidity, pressure,
-    wind_speed, wind_deg, visibility, clouds, desc, sunrise, sunset
+    wind_speed, wind_deg, visibility, clouds, desc, weather_main, desc, weather_id,
+    rain_1h, snow_1h, sunrise, sunset
 ]
 
 # --- Write headers if sheet is empty ---
