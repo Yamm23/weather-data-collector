@@ -41,28 +41,43 @@ headers = [
 if not sheet.row_values(1):
     sheet.append_row(headers)
 
-# Clear previous content (optional if you only want 1 record per day)
-sheet.clear()
-sheet.append_row(headers)
+# Read existing dates in the first column to avoid duplicates
+existing_dates = sheet.col_values(1)
 
 for day in days:
-    values = day['values']
     dt = datetime.fromisoformat(day['time'][:-1]).astimezone(nepal_tz).strftime('%Y-%m-%d')
-    sunrise = datetime.fromisoformat(values.get("sunriseTime")[:-1]).astimezone(nepal_tz).strftime('%H:%M:%S') if values.get("sunriseTime") else None
-    sunset = datetime.fromisoformat(values.get("sunsetTime")[:-1]).astimezone(nepal_tz).strftime('%H:%M:%S') if values.get("sunsetTime") else None
-    row = [
-        dt,
-        values.get("temperatureMax"),
-        values.get("temperatureMin"),
-        values.get("humidityAvg"),
-        values.get("windSpeedAvg"),
-        values.get("cloudCoverAvg"),
-        values.get("precipitationSum"),
-        values.get("uvIndexMax"),
-        values.get("weatherCodeMax"),
-        sunrise,
-        sunset
-    ]
-    sheet.append_row(row)
+    if dt not in existing_dates:
+        values = day['values']
+        # Sunrise and Sunset may be timestamps or strings; convert if timestamps
+        sunrise = values.get("sunriseTime")
+        sunset = values.get("sunsetTime")
 
-print("Daily weather forecast updated!")
+        # Convert sunrise and sunset ISO strings to local time formatted HH:MM:SS if present
+        def convert_time(timestr):
+            if timestr:
+                try:
+                    dt_obj = datetime.fromisoformat(timestr[:-1]).astimezone(nepal_tz)
+                    return dt_obj.strftime('%H:%M:%S')
+                except Exception:
+                    return timestr
+            return ""
+
+        sunrise_fmt = convert_time(sunrise)
+        sunset_fmt = convert_time(sunset)
+
+        row = [
+            dt,
+            values.get("temperatureMax"),
+            values.get("temperatureMin"),
+            values.get("humidityAvg"),
+            values.get("windSpeedAvg"),
+            values.get("cloudCoverAvg"),
+            values.get("precipitationSum"),
+            values.get("uvIndexMax"),
+            values.get("weatherCodeMax"),
+            sunrise_fmt,
+            sunset_fmt
+        ]
+        sheet.append_row(row)
+
+print("Daily weather forecast updated with new dates!")

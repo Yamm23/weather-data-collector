@@ -28,4 +28,4 @@ jobs:
       - name: Run real-time weather script
         env:
           TOMORROW_API_KEY: ${{ secrets.TOMORROW_API_KEY }}
-        run: python scripts/real_time.py
+        run: python scripts/realtime.py
