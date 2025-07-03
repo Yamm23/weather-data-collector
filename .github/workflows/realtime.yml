@@ -23,7 +23,7 @@ jobs:
           pip install requests gspread oauth2client pytz
 
       - name: Decode Google credentials
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" | base64 -d > service_account.json
+        run: echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" | base64 -d > service_account.json
 
       - name: Run real-time weather script
         env:
