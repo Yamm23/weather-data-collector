@@ -5,55 +5,66 @@ import pytz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# --- Setup Google Sheets client ---
+# --- Google Sheets setup ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name('service_account.json', scope)
 client = gspread.authorize(creds)
+sheet = client.open("WeatherLog").worksheet("Current")
 
-# --- Configuration ---
+# --- API Config ---
+API_KEY = os.getenv("TOMORROW_API_KEY")
 LAT = 27.7172
 LON = 85.3240
-TOMORROW_API_KEY = os.getenv("TOMORROW_API_KEY")
-nepal_tz = pytz.timezone("Asia/Kathmandu")
+nepal_tz = pytz.timezone('Asia/Kathmandu')
 
-# --- Google Sheet ---
-sheet = client.open("WeatherLog").worksheet("Realtime")  # change tab if needed
-
-# --- API Request ---
-url = f"https://api.tomorrow.io/v4/weather/realtime?location={LAT},{LON}&apikey={TOMORROW_API_KEY}"
+# --- Request Real-time Weather ---
+url = f"https://api.tomorrow.io/v4/weather/realtime?location={LAT},{LON}&apikey={API_KEY}"
 response = requests.get(url)
 data = response.json()
 
-# --- Parse and Extract ---
+# --- Parse data ---
 values = data['data']['values']
+api_time_str = data['data']['time']
+timestamp = datetime.fromisoformat(api_time_str.replace("Z", "+00:00")).astimezone(nepal_tz).strftime('%Y-%m-%d %H:%M:%S')
 
-timestamp = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(nepal_tz).strftime('%Y-%m-%d %H:%M:%S')
-temperature = values.get('temperature')
-apparent_temperature = values.get('temperatureApparent')
-humidity = values.get('humidity')
-wind_speed = values.get('windSpeed')
-wind_direction = values.get('windDirection')
-pressure = values.get('pressureSeaLevel')
-precipitation = values.get('precipitationIntensity', 0.0)
-cloud_cover = values.get('cloudCover')
-visibility = values.get('visibility')
-
-# --- Prepare Headers and Row ---
+# --- Relevant Weather Fields (No Freezing Rain) ---
 headers = [
-    "Timestamp", "Temp (°C)", "Apparent Temp (°C)", "Humidity (%)", "Pressure (hPa)",
-    "Wind Speed (m/s)", "Wind Direction (°)", "Precipitation (mm/hr)",
-    "Cloud Cover (%)", "Visibility (km)"
+    "Timestamp", "Temperature (°C)", "Apparent Temp (°C)", "Dew Point (°C)", "Humidity (%)",
+    "Rain Intensity (mm/hr)", "Sleet Intensity",
+    "Cloud Cover (%)", "Cloud Base (km)", "Cloud Ceiling (km)",
+    "Visibility (km)", "UV Index", "UV Health Concern",
+    "Wind Speed (m/s)", "Wind Direction (°)", "Wind Gust (m/s)",
+    "Altimeter Setting (hPa)", "Pressure Sea Level (hPa)", "Pressure Surface Level (hPa)",
+    "Weather Code"
 ]
 
-row = [
-    timestamp, temperature, apparent_temperature, humidity, pressure,
-    wind_speed, wind_direction, precipitation, cloud_cover, visibility
+data_row = [
+    timestamp,
+    values.get("temperature"),
+    values.get("temperatureApparent"),
+    values.get("dewPoint"),
+    values.get("humidity"),
+    values.get("rainIntensity"),
+    values.get("sleetIntensity"),
+    values.get("cloudCover"),
+    values.get("cloudBase"),
+    values.get("cloudCeiling"),
+    values.get("visibility"),
+    values.get("uvIndex"),
+    values.get("uvHealthConcern"),
+    values.get("windSpeed"),
+    values.get("windDirection"),
+    values.get("windGust"),
+    values.get("altimeterSetting"),
+    values.get("pressureSeaLevel"),
+    values.get("pressureSurfaceLevel"),
+    values.get("weatherCode")
 ]
 
-# --- Add headers if empty ---
+# --- Write headers if sheet is empty ---
 if not sheet.row_values(1):
     sheet.append_row(headers)
 
-# --- Append new row ---
-sheet.append_row(row)
-print("Realtime weather logged successfully.")
+# --- Append data row ---
+sheet.append_row(data_row)
+print("✅ Real-time weather data appended successfully!")
