@@ -1,7 +1,9 @@
 # Ignore secret files
 service_account.json
+weather.yaml
 
 # Optional: Ignore other clutter
 __pycache__/
 *.pyc
 .env
+

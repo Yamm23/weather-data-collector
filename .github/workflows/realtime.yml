@@ -1,0 +1,31 @@
+name: Real-time Weather Logger
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'  # Every 20 minutes
+  workflow_dispatch:
+
+jobs:
+  log_real_time_weather:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests gspread oauth2client pytz
+
+      - name: Decode Google credentials
+        run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" | base64 -d > service_account.json
+
+      - name: Run real-time weather script
+        env:
+          TOMORROW_API_KEY: ${{ secrets.TOMORROW_API_KEY }}
+        run: python scripts/real_time.py
